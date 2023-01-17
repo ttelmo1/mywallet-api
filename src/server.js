@@ -146,6 +146,29 @@ server.delete('/entries/:id', async (req, res) => {
     }
 });
 
+server.put('/entries/:id', async (req, res) => {
+    const { id } = req.params;
+    const { description, value } = req.body;
+    const from = req.headers.user;
+    const user = await db.collection('users').find({ from })
+
+    if(!user || !from){
+        return res.sendStatus(422);
+    }
+    try {
+        const transaction = await db.collection('transactions').findOne({ _id: new ObjectId(id) });
+        if (!transaction) {
+            return res.sendStatus(404);
+        }
+        await db.collection('transactions').updateOne({ _id: transaction._id }, { $set: { description, value } });
+        res.status(200).send({ transaction });
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
 
 
 
