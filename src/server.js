@@ -4,7 +4,7 @@ import cors from 'cors';
 import Joi from 'joi';
 import dayjs from 'dayjs';
 import 'dayjs/locale/pt-br.js';
-import { MongoClient } from 'mongodb';
+import { MongoClient, ObjectId } from 'mongodb';
 
 const userSchema = Joi.object({
     name: Joi.string().required(),
@@ -102,6 +102,50 @@ server.post('/new-entry', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
+server.get('/entries', async (req, res) => {
+    const from = req.headers.user;
+    const user = await db.collection('users').find({ from })
+
+    if(!user || !from){
+        return res.sendStatus(422);
+    }
+    try {
+        const transactions = await db.collection('transactions').find({ from }).toArray();
+        res.send(transactions);
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
+server.delete('/entries/:id', async (req, res) => {  
+    const { id } = req.params;
+    const from = req.headers.user;
+    const user = await db.collection('users').find({ from })
+
+    if(!user || !from){ 
+        return res.sendStatus(422);
+    }
+    
+    try {
+        const transaction = await db.collection('transactions').findOne({ _id: ObjectId(id) });
+        if (!transaction) {
+            return res.sendStatus(404);
+        }
+
+        await db.collection('transactions').deleteOne({ _id: ObjectId(id) });
+        res.sendStatus(200);
+
+        
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
 
 
 
