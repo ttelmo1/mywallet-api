@@ -18,6 +18,10 @@ const loginSchema = Joi.object({
     password: Joi.required()
 });
 
+const entrySchema = Joi.object({
+    description: Joi.string().required(),
+    value: Joi.number().required(),
+});
 
 
 dotenv.config();
@@ -75,6 +79,36 @@ server.post('/sign-in', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
+server.post('/new-entry', async (req, res) => {
+    const { description, value } = req.body;
+    const from = req.headers.user;
+    const result = entrySchema.validate({ description, value });
+    const user = await db.collection('users').find({ from })
+
+    if(!user || !from){
+        return res.sendStatus(422);
+    }
+
+    if (result.error) {
+        return res.status(400).send(result.error.details[0].message);
+    }
+    try {
+        await db.collection('transactions').insertOne({ description, value, date: dayjs().format('DD/MM'), from });
+        res.sendStatus(201);
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
+
+
+
+
+
+    
 
 
 
