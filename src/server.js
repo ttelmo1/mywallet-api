@@ -21,6 +21,7 @@ const loginSchema = Joi.object({
 const entrySchema = Joi.object({
     description: Joi.string().required(),
     value: Joi.number().required(),
+    type: Joi.string().required().valid('income', 'expense')
 });
 
 
@@ -81,7 +82,7 @@ server.post('/sign-in', async (req, res) => {
 });
 
 server.post('/new-entry', async (req, res) => {
-    const { description, value } = req.body;
+    const { description, value, type } = req.body;
     const from = req.headers.user;
     const result = entrySchema.validate({ description, value });
     const user = await db.collection('users').find({ from })
@@ -102,6 +103,7 @@ server.post('/new-entry', async (req, res) => {
         res.sendStatus(500);
     }
 });
+
 
 server.get('/entries', async (req, res) => {
     const from = req.headers.user;
@@ -125,26 +127,23 @@ server.delete('/entries/:id', async (req, res) => {
     const from = req.headers.user;
     const user = await db.collection('users').find({ from })
 
-    if(!user || !from){ 
+    if(!user || !from){
         return res.sendStatus(422);
     }
-    
     try {
-        const transaction = await db.collection('transactions').findOne({ _id: ObjectId(id) });
+        const transaction = await db.collection('transactions').findOne({ _id: new ObjectId(id) });
         if (!transaction) {
             return res.sendStatus(404);
         }
-
-        await db.collection('transactions').deleteOne({ _id: ObjectId(id) });
+        await db.collection('transactions').deleteOne({ _id: new ObjectId(id) });
         res.sendStatus(200);
-
-        
     }
     catch (error) {
         console.log(error);
         res.sendStatus(500);
     }
 });
+
 
 server.put('/entries/:id', async (req, res) => {
     const { id } = req.params;
@@ -168,14 +167,7 @@ server.put('/entries/:id', async (req, res) => {
         res.sendStatus(500);
     }
 });
-
-
-
-
-
-
-
-    
+   
 
 
 
