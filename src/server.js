@@ -30,7 +30,7 @@ catch (error) {
     console.log('Erro ao conectar ao banco de dados');
 }
 
-server.post('/sign-in', async (req, res) => {
+server.post('/sign-up', async (req, res) => {
     const { name, email, password } = req.body;
     const result = userSchema.validate({ name, email, password });
     if (result.error) {
