@@ -13,6 +13,12 @@ const userSchema = Joi.object({
     repeatPassword: Joi.ref('password')
 });
 
+const loginSchema = Joi.object({
+    email: Joi.string().email().required(),
+    password: Joi.required()
+});
+
+
 
 dotenv.config();
 const server = express();
@@ -50,6 +56,26 @@ server.post('/sign-up', async (req, res) => {
     }
 
 });
+
+server.post('/sign-in', async (req, res) => {
+    const { email, password } = req.body;
+    const result = loginSchema.validate({ email, password });
+    if (result.error) {
+        return res.status(400).send(result.error.details[0].message);
+    }
+    try {
+        const user = await db.collection('users').findOne({ email });
+        if (!user || user.password !== password) {
+            return res.sendStatus(401);
+        }
+        res.sendStatus(200);
+    }
+    catch (error) {
+        console.log(error);
+        res.sendStatus(500);
+    }
+});
+
 
 
 
